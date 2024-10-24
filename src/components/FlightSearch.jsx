@@ -202,11 +202,13 @@ const FlightSearch = ({ setFlights }) => {
               )}
             </div>
           </div>
+
           {/* Date Picker for Travel Date */}
           <div className="mb-6 w-full">
             <label className="block text-sm font-medium text-gray-600 mb-2">
               Select Travel Date
             </label>
+
             <DatePicker
               selected={travelDate}
               onChange={handleDateChange}
