@@ -59,7 +59,7 @@ const FlightListings = ({ flightData }) => {
           ))}
         </div>
       ) : (
-        <p>No flights found</p>
+        <p class="flex justify-center items-center"></p>
       )}
     </div>
   );
