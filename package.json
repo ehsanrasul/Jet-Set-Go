@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.10",
+    "@heroicons/react": "^2.1.5",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
@@ -17,8 +19,7 @@
     "react-datepicker": "^7.5.0",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
-    "react-router-dom": "^6.27.0",
-    "rsuite": "^5.73.0"
+    "react-router-dom": "^6.27.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

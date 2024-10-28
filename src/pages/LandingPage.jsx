@@ -1,208 +1,412 @@
-// import React from "react";
-// import { useNavigate } from "react-router-dom";
-
-// const LandingPage = () => {
-//   const navigate = useNavigate();
-//   return (
-//     <main className="min-h-screen bg-gradient-to-r from-blue-900 to-indigo-600 text-white">
-//       {/* Navbar */}
-//       <nav className="flex justify-between items-center px-40 py-6">
-//         <div className="text-3xl font-bold">JetSetGo</div>
-//         <ul className="flex space-x-6 text-lg">
-//           <li>
-//             <a href="#features" className="hover:text-gray-300">
-//               Features
-//             </a>
-//           </li>
-//           <li>
-//             <a href="#about" className="hover:text-gray-300">
-//               About
-//             </a>
-//           </li>
-//           <li>
-//             <a href="#contact" className="hover:text-gray-300">
-//               Contact
-//             </a>
-//           </li>
-//         </ul>
-//       </nav>
-
-//       {/* Hero Section */}
-//       <section className="flex flex-col items-center justify-center text-center pt-20 pb-32">
-//         <h1 className="text-5xl font-extrabold mb-4">
-//           Travel Made Easy with JetSetGo
-//         </h1>
-//         <p className="text-xl mb-8 max-w-2xl">
-//           Book flights seamlessly, explore the skies, and experience hassle-free
-//           travel. Get the best deals on flights and enjoy an effortless booking
-//           experience.
-//         </p>
-//         <button
-//           onClick={() => {
-//             navigate("/booking");
-//           }}
-//           className="bg-yellow-500 text-black px-6 py-3 rounded-full font-semibold hover:bg-yellow-600"
-//         >
-//           Find Flights
-//         </button>
-//       </section>
-
-//       {/* Features Section */}
-//       <section id="features" className="py-16 bg-gray-900 text-center px-40">
-//         <h2 className="text-4xl font-bold mb-8">Why Choose JetSetGo?</h2>
-//         <div className="grid md:grid-cols-3 gap-8">
-//           <div className="bg-gray-800 p-6 rounded-lg">
-//             <h3 className="text-2xl font-semibold mb-4">Affordable Prices</h3>
-//             <p>
-//               We compare fares from top airlines to ensure you get the best
-//               price.
-//             </p>
-//           </div>
-//           <div className="bg-gray-800 p-6 rounded-lg">
-//             <h3 className="text-2xl font-semibold mb-4">
-//               User-Friendly Interface
-//             </h3>
-//             <p>
-//               Seamless and easy-to-navigate booking system for a smooth
-//               experience.
-//             </p>
-//           </div>
-//           <div className="bg-gray-800 p-6 rounded-lg">
-//             <h3 className="text-2xl font-semibold mb-4">24/7 Support</h3>
-//             <p>
-//               We're here to help you any time of the day for any travel-related
-//               queries.
-//             </p>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* About Section */}
-//       <section id="about" className="py-16 text-center px-40">
-//         <h2 className="text-4xl font-bold mb-8">About JetSetGo</h2>
-//         <p className="max-w-3xl mx-auto text-lg">
-//           JetSetGo is dedicated to making air travel convenient and affordable.
-//           Whether you're flying for business or pleasure, we provide a
-//           streamlined platform for you to book flights and enjoy your journey.
-//         </p>
-//       </section>
-
-//       {/* Footer */}
-//       <footer id="contact" className="py-10 bg-gray-800 text-center px-40">
-//         <h3 className="text-2xl font-bold mb-4">Get in Touch</h3>
-//         <p>Email: support@jetsetgo.com | Phone: +123 456 7890</p>
-//         <p className="mt-4">&copy; 2024 JetSetGo. All Rights Reserved.</p>
-//       </footer>
-//     </main>
-//   );
-// };
-
-// export default LandingPage;
-
-import React from "react";
-import { useNavigate } from "react-router-dom";
 import MapComponent from "../components/MapComponent";
 import FlightListings from "../components/FlightListings";
-import DatePicker from "rsuite";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; // Import the CSS for the date picker
+import { useState, useEffect } from "react";
+import {
+  Combobox,
+  ComboboxButton,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+} from "@headlessui/react";
+import clsx from "clsx";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/20/solid";
+
+import PassengerSelector from "../components/PassengerSelector";
+
+import airportsData from "../../airportData.json";
+
+import { fetchAirportsByName } from "../services/airports";
+import { getFlights } from "../services/flights";
+
+import FlightCard from "../components/FlightCard";
+
+const CabinClasses = ["Economy", "Premium Economy", "Business", "First"];
+// const TripTypes = ["Round trip", "One way"];
 
 const LandingPage = () => {
-  const navigate = useNavigate();
+  const [airports] = useState(airportsData.data);
+
+  const [filteredDepartureAirports, setFilteredDepartureAirports] = useState(
+    []
+  );
+  const [filteredArrivalAirports, setFilteredArrivalAirports] = useState([]);
+
+  // Trip Details
+  const [travelDate, setTravelDate] = useState(null);
+  const [returnDate, setReturnDate] = useState(null);
+
+  const [selectedDepartureAirport, setSelectedDepartureAirport] =
+    useState(null);
+  const [selectedArrivalAirport, setSelectedArrivalAirport] = useState(null);
+
+  const [tripType, setTripType] = useState("Round trip");
+  const [cabinClass, setCabinClass] = useState("Economy");
+
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [infantsInSeat, setInfantsInSeat] = useState(0);
+  const [infantsOnLap, setInfantsOnLap] = useState(0);
+
+  // Flights Data
+  const [flights, setFlights] = useState(null);
+
+  // Filter airports for departure
+  const handleFilterDepartureAirports = (e) => {
+    const search = e.target.value.trim().toLowerCase();
+    const filtered = airports
+      .filter((airport) => {
+        const name = airport.name.toLowerCase();
+        const location = airport.location.toLowerCase();
+        return name.startsWith(search) || location.startsWith(search);
+      })
+      .slice(0, 10); // Show only top 10 results
+    setFilteredDepartureAirports(filtered);
+  };
+
+  // Filter airports for arrival
+  const handleFilterArrivalAirports = (e) => {
+    const search = e.target.value.trim().toLowerCase();
+    const filtered = airports
+      .filter((airport) => {
+        const name = airport.name.toLowerCase();
+        const location = airport.location.toLowerCase();
+        return name.startsWith(search) || location.startsWith(search);
+      })
+      .slice(0, 10); // Show only top 10 results
+    setFilteredArrivalAirports(filtered);
+  };
+
+  useEffect(() => {
+    console.log("Airports Data Loaded:", airports);
+  }, [airports]);
+
+  // Handle the date change for the date picker
+  const handleDateChange = (date) => {
+    setTravelDate(date);
+  };
+
+  const handleReturnDateChange = (date) => {
+    setReturnDate(date);
+  };
+
+  const handleSearch = async () => {
+    console.log("Searching for flights...");
+
+    const departureAirport = airports.find((airport) =>
+      airport.name.includes(selectedDepartureAirport)
+    );
+
+    const arrivalAirport = airports.find((airport) =>
+      airport.name.includes(selectedArrivalAirport)
+    );
+
+    const searchedDepartureAirport = await fetchAirportsByName(
+      selectedDepartureAirport
+    );
+
+    const searchedArrivalAirport = await fetchAirportsByName(
+      selectedArrivalAirport
+    );
+    // Filtering the fetched airports based on skyId
+    const filteredDepartureAirport = searchedDepartureAirport.find(
+      (airport) => airport.skyId === departureAirport.skyId
+    );
+
+    const filteredArrivalAirport = searchedArrivalAirport.find(
+      (airport) => airport.skyId === arrivalAirport.skyId
+    );
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    const departureDate = formatDate(travelDate);
+    const returnDateFormatted = returnDate ? formatDate(returnDate) : null;
+
+    try {
+      const flights = await getFlights(
+        filteredDepartureAirport.skyId,
+        filteredArrivalAirport.skyId,
+        filteredDepartureAirport.entityId,
+        filteredArrivalAirport.entityId,
+        departureDate,
+        returnDateFormatted,
+        cabinClass.toLowerCase().replace(" ", "_"),
+        adults,
+        children,
+        infantsInSeat,
+        infantsOnLap
+      );
+
+      console.log("Flights:", flights);
+      setFlights(flights);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="grid gap-4">
       <div className="grid place-items-center">
         <h1 className="text-2xl md:text-4xl lg:text-6xl">Flights</h1>
       </div>
-      <div class="w-full max-w-3xl mx-auto p-6 bg-white rounded-md shadow-lg">
-        <div class="flex items-center space-x-4">
-          <div class="relative">
-            <button class="flex items-center px-3 py-2 bg-gray-100 rounded-md shadow-sm text-gray-700">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
+
+      <div className="relative w-8/12 mx-auto p-6 bg-white rounded-md shadow-lg">
+        <div className="flex justify-start items-center space-x-4">
+          <div className="w-36">
+            <Listbox value={tripType} onChange={setTripType}>
+              <ListboxButton
+                className={clsx(
+                  "relative block w-full rounded-lg bg-gray-100 py-1.5 pr-8 pl-3 text-left text-sm/6 text-gray-700",
+                  "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25"
+                )}
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M8 7h.01M12 7h.01M16 7h.01M21 10a7.963 7.963 0 00-1.1-4h.5a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5H18a1.001 1.001 0 00-.9 1.45A7.963 7.963 0 0012 2a7.963 7.963 0 00-5.1 1.95A1.001 1.001 0 006 2.5v-1.5a.5.5 0 00-.5-.5H4a.5.5 0 00-.5.5v2.5a.5.5 0 00.5.5h.5A7.963 7.963 0 003 10c0 1.29.22 2.52.63 3.65A8.001 8.001 0 0012 20a8.001 8.001 0 008.37-7.35A7.963 7.963 0 0021 10z"
+                {tripType}
+                <ChevronDownIcon
+                  className="group pointer-events-none absolute top-2.5 right-2.5 size-4 fill-gray-700"
+                  aria-hidden="true"
                 />
-              </svg>
-              Multi-city
-            </button>
+              </ListboxButton>
+              <ListboxOptions
+                anchor="bottom"
+                transition
+                className={clsx(
+                  "w-[var(--button-width)] rounded-xl border border-white/5 bg-white p-1 [--anchor-gap:var(--spacing-1)] focus:outline-none",
+                  "transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0"
+                )}
+              >
+                <ListboxOption
+                  key={1}
+                  value={"Round trip"}
+                  className="group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-black/10"
+                >
+                  <CheckIcon className="invisible size-4 fill-gray-800 group-data-[selected]:visible" />
+                  <div className="text-sm/6 text-gray-700">Round trip</div>
+                </ListboxOption>
+
+                <ListboxOption
+                  key={2}
+                  value={"One way"}
+                  className="group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-black/10"
+                >
+                  <CheckIcon className="invisible size-4 fill-gray-800 group-data-[selected]:visible" />
+                  <div className="text-sm/6 text-gray-700">One way</div>
+                </ListboxOption>
+              </ListboxOptions>
+            </Listbox>
           </div>
+
           <div>
-            <input
-              type="number"
-              min="1"
-              value="1"
-              class="w-16 px-3 py-2 bg-gray-100 rounded-md text-gray-700 shadow-sm focus:outline-none"
+            <PassengerSelector
+              adults={adults}
+              childs={children}
+              infantsInSeat={infantsInSeat}
+              infantsOnLap={infantsOnLap}
+              setAdults={setAdults}
+              setChildren={setChildren}
+              setInfantsInSeat={setInfantsInSeat}
+              setInfantsOnLap={setInfantsOnLap}
             />
           </div>
-          <div>
-            <select class="px-3 py-2 bg-gray-100 rounded-md shadow-sm text-gray-700 focus:outline-none">
-              <option>Economy</option>
-              <option>Business</option>
-              <option>First</option>
-            </select>
+
+          {/* Cabin Class */}
+          <div className="min-w-36">
+            <Listbox value={cabinClass} onChange={setCabinClass}>
+              <ListboxButton
+                className={clsx(
+                  "relative block w-full rounded-lg bg-gray-100 py-1.5 pr-8 pl-3 text-left text-sm/6 text-gray-700",
+                  "focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25"
+                )}
+              >
+                {cabinClass}
+                <ChevronDownIcon
+                  className="group pointer-events-none absolute top-2.5 right-2.5 size-4 fill-gray-700"
+                  aria-hidden="true"
+                />
+              </ListboxButton>
+              <ListboxOptions
+                anchor="bottom"
+                transition
+                className={clsx(
+                  "w-[var(--button-width)] rounded-xl border border-white/5 bg-white p-1 [--anchor-gap:var(--spacing-1)] focus:outline-none",
+                  "transition duration-100 ease-in data-[leave]:data-[closed]:opacity-0"
+                )}
+              >
+                {CabinClasses.map((cabin) => (
+                  <ListboxOption
+                    key={cabin}
+                    value={cabin}
+                    className="group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-black/10"
+                  >
+                    <CheckIcon
+                      className="invisible size-4 fill-gray-800 group-data-[selected]:visible"
+                      aria-hidden="true"
+                    />
+                    <div className="text-sm/6 text-gray-700">{cabin}</div>
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </Listbox>
           </div>
         </div>
 
-        <div class="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div class="col-span-1">
-            <input
-              type="text"
-              placeholder="Where from?"
-              class="w-full px-4 py-3 bg-white border border-gray-300 rounded-md text-gray-700 placeholder-black shadow-sm focus:outline-none"
-            />
-          </div>
-          <div class="col-span-1">
-            <input
-              type="text"
-              placeholder="Where to?"
-              class="w-full px-4 py-3 bg-white border border-gray-300 rounded-md text-gray-700 placeholder-black shadow-sm focus:outline-none"
-            />
-          </div>
-          <div class="col-span-1">
-            <input
-              type="date"
-              value="2024-10-28"
-              class="w-full px-4 py-3 bg-white border border-gray-300 rounded-md text-gray-700 shadow-sm focus:outline-none"
-            />
-          </div>
-          <div class="col-span-1">
-            <input
-              type="date"
-              value="2024-10-28"
-              class="w-full px-4 py-3 bg-white border border-gray-300 rounded-md text-gray-700 shadow-sm focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <div class="mt-4 flex items-center space-x-4">
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-500 focus:outline-none flex items-center mx-auto">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
+        <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {/* Departure Combobox */}
+          <div className="col-span-1 relative">
+            <Combobox
+              value={selectedDepartureAirport}
+              onChange={setSelectedDepartureAirport}
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 12h-6m6-4H9m6 8H9"
+              <div className="relative">
+                <ComboboxInput
+                  value={selectedDepartureAirport}
+                  onChange={handleFilterDepartureAirports}
+                  className="w-full px-4 py-3 pr-10 bg-white border border-gray-300 rounded-md text-gray-700 placeholder-black shadow-sm focus:outline-none"
+                  placeholder="Where from?"
+                  autoComplete="off"
+                />
+                <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2 ">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06-.02L10 10.94l3.71-3.75a.75.75 0 011.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0l-4.25-4.25a.75.75 0 01-.02-1.06z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </ComboboxButton>
+              </div>
+              <ComboboxOptions className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto focus:outline-none">
+                {filteredDepartureAirports.map((airport) => (
+                  <ComboboxOption
+                    key={airport.skyId}
+                    value={airport.name.trim().split(" ")[0]}
+                  >
+                    <button className="mb-2 w-full hover:bg-gray-400">
+                      {airport.name} ({airport.skyId})
+                    </button>
+                  </ComboboxOption>
+                ))}
+              </ComboboxOptions>
+            </Combobox>
+          </div>
+
+          {/* Arrival Combobox */}
+          <div className="col-span-1 relative">
+            <Combobox
+              value={selectedArrivalAirport}
+              onChange={setSelectedArrivalAirport}
+            >
+              <div className="relative">
+                <ComboboxInput
+                  onChange={handleFilterArrivalAirports}
+                  className="w-full px-4 py-3 pr-10 bg-white border border-gray-300 rounded-md text-gray-700 placeholder-black shadow-sm focus:outline-none"
+                  placeholder="Where to?"
+                  autoComplete="off"
+                />
+                <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2 ">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06-.02L10 10.94l3.71-3.75a.75.75 0 011.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0l-4.25-4.25a.75.75 0 01-.02-1.06z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </ComboboxButton>
+              </div>
+              <ComboboxOptions className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto focus:outline-none">
+                {filteredArrivalAirports.map((airport) => (
+                  <ComboboxOption
+                    key={airport.skyId}
+                    value={airport.name.trim().split(" ")[0]}
+                  >
+                    <button className="mb-2 w-full hover:bg-gray-400">
+                      {airport.name} ({airport.skyId})
+                    </button>
+                  </ComboboxOption>
+                ))}
+              </ComboboxOptions>
+            </Combobox>
+          </div>
+
+          {/* Departure Date Picker */}
+          <div className="col-span-1">
+            <DatePicker
+              selected={travelDate}
+              onChange={handleDateChange}
+              dateFormat="yyyy/MM/dd"
+              placeholderText="Departure"
+              endDate={returnDate}
+              minDate={new Date()}
+              className="w-full text-black px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white focus:outline-none focus:border-blue-500 focus:ring focus:ring-blue-300 placeholder-gray-400"
+              calendarClassName="rounded-lg shadow-lg border border-gray-300"
+              dayClassName={() => "hover:bg-blue-100 focus:bg-blue-100"}
+              popperClassName="rounded-lg shadow-lg"
+            />
+          </div>
+
+          {/* Return Date Picker */}
+          {tripType === "Round trip" && (
+            <div className="col-span-1">
+              <DatePicker
+                selected={returnDate}
+                onChange={handleReturnDateChange}
+                dateFormat="yyyy/MM/dd"
+                placeholderText="Return"
+                disabled={!travelDate}
+                minDate={travelDate}
+                className="w-full text-black px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white focus:outline-none focus:border-blue-500 focus:ring focus:ring-blue-300 placeholder-gray-400"
+                calendarClassName="rounded-lg shadow-lg border border-gray-300"
+                dayClassName={() => "hover:bg-blue-100 focus:bg-blue-100"}
+                popperClassName="rounded-lg shadow-lg"
               />
-            </svg>
-            Search
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center space-x-4">
+          <button
+            className="absolute -bottom-4 right-1/2 rounded-full px-4 py-2 bg-blue-600 text-white shadow-sm hover:bg-blue-500 focus:outline-none flex items-center mx-auto"
+            onClick={handleSearch}
+          >
+            <MagnifyingGlassIcon className="w-5 h-5 mr-2" />
+            Explore
           </button>
         </div>
       </div>
 
-      <FlightListings />
+      {flights && (
+        <section className="w-9/12 mx-auto py-10">
+          <FlightListings flights={flights.data.itineraries} />
+        </section>
+      )}
+
       <MapComponent />
     </div>
   );
